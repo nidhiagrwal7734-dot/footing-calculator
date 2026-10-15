@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Construction Calculator</title>
+<link rel="manifest" href="/footing-calculator/manifest.json">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef3f8;color:#172d43;font:15px system-ui,sans-serif}
+header{background:#123149;color:white;padding:22px}
+header h1{margin:0 0 6px;font-size:24px}
+header p{margin:0;color:#cbdde9}
+main{max-width:1250px;margin:auto;padding:18px;display:grid;grid-template-columns:360px 1fr;gap:18px}
+.card{background:white;border:1px solid #dde5ee;border-radius:16px;padding:20px;box-shadow:0 5px 20px #17304b08}
+h2{font-size:18px;margin:0 0 16px}
+label{display:block;font-size:13px;font-weight:650;margin-bottom:6px}
+input,select,button{font:inherit}
+input,select{width:100%;padding:10px;border:1px solid #c8d5e1;border-radius:8px;background:white;color:#172d43}
+input:focus,select:focus{outline:2px solid #54bbb1}
+.field{margin-bottom:13px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.help{font-size:12px;line-height:1.6;color:#60758a}
+.layer{padding:12px;background:#f5f8fb;border-radius:10px;margin:10px 0}
+.layer b{display:block;margin-bottom:10px}
+.layer .row{grid-template-columns:repeat(3,1fr);gap:8px}
+button{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;background:#e7eff6;color:#17364e}
+button:hover{background:#d9e7f1}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+.visual{padding:0;overflow:hidden}
+.visual-head{padding:18px 20px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.visual-head h2{margin:0}
+canvas{display:block;width:100%;height:470px;touch-action:none;background:linear-gradient(#f8fbfd,#eef5fa);cursor:grab}
+canvas:active{cursor:grabbing}
+.caption{padding:12px 20px;color:#60758a;font-size:12px;line-height:1.6;border-top:1px solid #e3ebf2}
+.results{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.metric{background:#123149;color:white;border-radius:13px;padding:18px}
+.metric small{color:#c7dce9}
+.metric strong{display:block;font-size:27px;margin-top:7px;overflow-wrap:anywhere}
+.metric.secondary{background:#e5f4f0;color:#146253}
+.metric.secondary small{color:#40756c}
+.details{margin-top:18px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #e1e8ee}
+th{color:#526b80}
+td:last-child,th:last-child{text-align:right}
+.formula{background:#f1f6fa;padding:12px;border-radius:9px;margin-top:14px;line-height:1.7;white-space:pre-line;font-size:13px}
+#error{color:#9e2530;background:#fff0f1;padding:12px;border-radius:9px;margin-top:12px;display:none;line-height:1.5}
+.note{font-size:12px;line-height:1.7;color:#617386;margin-top:14px}
+@media(max-width:850px){main{grid-template-columns:1fr}canvas{height:400px}}
+@media(max-width:430px){main{padding:10px}.card{padding:15px}.visual{padding:0}.metric strong{font-size:23px}}
+
+.calc-work{margin-top:14px;padding:12px;background:#f1f6fa;border-radius:9px;white-space:pre-line;line-height:1.8;font-size:13px;color:#263f52;overflow-wrap:anywhere}
+
+/* ── Material Calculator ── */
+.mat-card{background:white;border:1px solid #dde5ee;border-radius:16px;padding:22px;box-shadow:0 5px 20px #17304b08;margin-top:18px}
+.mat-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+.mat-header h2{margin:0;font-size:18px}
+.unit-toggle{display:flex;border:1px solid #c8d5e1;border-radius:8px;overflow:hidden}
+.unit-toggle button{border:0;border-radius:0;padding:7px 18px;background:#f5f8fb;color:#526b80;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
+.unit-toggle button.active{background:#123149;color:white}
+.mat-note{font-size:11.5px;color:#7a8fa0;margin-top:14px;line-height:1.6}
+/* Grade table */
+.mat-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #dde5ee}
+.mat-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:680px}
+.mat-tbl thead tr{background:#123149}
+.mat-tbl thead th{color:#c7dde9;font-weight:600;padding:11px 13px;text-align:center;white-space:nowrap;border:none}
+.mat-tbl thead th:first-child{text-align:left;border-radius:11px 0 0 0}
+.mat-tbl thead th:last-child{border-radius:0 11px 0 0}
+.mat-tbl tbody tr{border-bottom:1px solid #eaeff5;transition:background .12s}
+.mat-tbl tbody tr:last-child{border-bottom:none}
+.mat-tbl tbody tr:hover{background:#f4f8fb}
+.mat-tbl td{padding:11px 13px;text-align:center;vertical-align:middle}
+.mat-tbl td:first-child{text-align:left}
+.mat-tbl td.grade-name{font-weight:700;font-size:14px;white-space:nowrap}
+.mat-tbl td.grade-name span{display:block;font-size:11px;color:#7a8fa0;font-weight:400;margin-top:2px}
+.mat-tbl td .kg{font-weight:700;font-size:14px;color:#172d43}
+.mat-tbl td .sub{display:block;font-size:11px;color:#7a8fa0;margin-top:2px}
+.mat-tbl td .bags{font-weight:700;font-size:13px;color:#3a6e5c}
+/* Grade colour strips */
+.g-m75{border-left:4px solid #d4a017}
+.g-m10{border-left:4px solid #2a88c7}
+.g-m15{border-left:4px solid #28a063}
+.g-m20{border-left:4px solid #7c48d4}
+.g-m25{border-left:4px solid #d44840}
+@media(max-width:500px){.unit-toggle button{padding:6px 11px;font-size:12px}}
+
+/* ── Share / PDF buttons ── */
+.action-bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.btn-pdf{background:#123149;color:white;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s}
+.btn-pdf:hover{background:#1b4a6b}
+.btn-share{background:#25d366;color:white;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s}
+.btn-share:hover{background:#1da851}
+.btn-copy{background:#e7eff6;color:#17364e;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s}
+.btn-copy:hover{background:#d0e2ef}
+.copy-toast{display:none;font-size:12px;color:#28a063;font-weight:600;align-self:center}
+
+/* PDF opens in popup window — no print CSS needed here */
+
+/* ── Manual Volume Entry ── */
+.manual-vol-banner{background:#fffbea;border:1.5px solid #f0c040;border-radius:13px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+.manual-vol-banner span{color:#7a5c00;flex:1;min-width:160px}
+.manual-toggle-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:0}
+.manual-toggle-row label{font-size:13px;font-weight:650;color:#172d43;margin:0}
+.manual-vol-inputs{display:none;background:#f0f6fc;border:1.5px solid #b8d0e8;border-radius:12px;padding:14px 16px;margin-top:12px}
+.manual-vol-inputs.open{display:block}
+.manual-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.manual-row .field{margin-bottom:0}
+.manual-apply-btn{background:#123149;color:white;border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s;height:42px}
+.manual-apply-btn:hover{background:#1b4a6b}
+.manual-clear-btn{background:#e7eff6;color:#17364e;border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s;height:42px}
+.manual-clear-btn:hover{background:#d0e2ef}
+.manual-active-badge{display:none;background:#f0c040;color:#7a5c00;border-radius:6px;padding:3px 10px;font-size:11.5px;font-weight:700;align-self:center}
+.manual-active-badge.show{display:inline-block}
+
+/* ── Home Screen ── */
+#homeScreen{max-width:700px;margin:0 auto;padding:40px 18px 60px}
+.home-title{text-align:center;margin-bottom:32px}
+.home-title h2{font-size:22px;margin:0 0 6px;color:#172d43}
+.home-title p{margin:0;color:#60758a;font-size:14px}
+.menu-grid{display:grid;grid-template-columns:1fr;gap:18px;max-width:400px;margin:0 auto}
+.menu-card{background:white;border:1px solid #dde5ee;border-radius:20px;padding:32px 24px;text-align:center;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 18px #17304b0a;border:2px solid transparent}
+.menu-card:hover{transform:translateY(-4px);box-shadow:0 10px 32px #17304b18;border-color:#54bbb1}
+.menu-card .icon{font-size:48px;display:block;margin-bottom:14px}
+.menu-card h3{margin:0 0 8px;font-size:18px;color:#172d43}
+.menu-card p{margin:0;font-size:12.5px;color:#60758a;line-height:1.6}
+.menu-card.blue{background:linear-gradient(135deg,#eaf2fb,#f4f8fd)}
+.menu-card.green{background:linear-gradient(135deg,#e8f6f0,#f4fbf7)}
+@media(max-width:500px){.menu-grid{grid-template-columns:1fr}.menu-card{padding:24px 18px}}
+
+/* ── Back Button in Header ── */
+.header-inner{display:flex;align-items:center;gap:16px}
+.back-btn{background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;display:none;align-items:center;gap:6px;transition:background .15s}
+.back-btn:hover{background:rgba(255,255,255,0.25)}
+.header-text h1{margin:0 0 4px;font-size:22px}
+.header-text p{margin:0;color:#cbdde9;font-size:13px}
+
+/* ── Area Calculator ── */
+#areaScreen{display:none;max-width:1000px;margin:0 auto;padding:18px 18px 40px}
+.area-grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+.area-result-box{background:#123149;color:white;border-radius:14px;padding:20px;margin-bottom:14px}
+.area-result-box small{color:#c7dce9;font-size:12px}
+.area-result-box strong{display:block;font-size:32px;font-weight:700;margin-top:6px}
+.area-result-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.area-metric{background:#e5f4f0;color:#146253;border-radius:12px;padding:14px;text-align:center}
+.area-metric small{font-size:11px;color:#40756c;display:block;margin-bottom:4px}
+.area-metric strong{font-size:20px;font-weight:700}
+.shape-diagram{background:white;border:1px solid #dde5ee;border-radius:16px;overflow:hidden}
+.shape-canvas-wrap{padding:16px;background:#f8fbfd;min-height:260px;display:flex;align-items:center;justify-content:center}
+.area-table-card{background:white;border:1px solid #dde5ee;border-radius:16px;padding:20px;margin-top:14px}
+.area-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.area-tbl th{background:#123149;color:#c7dce9;padding:10px 12px;text-align:left;font-weight:600}
+.area-tbl th:last-child{text-align:right}
+.area-tbl td{padding:10px 12px;border-bottom:1px solid #eaeff5}
+.area-tbl td:last-child{text-align:right;font-weight:700;color:#123149}
+.area-tbl tr:last-child td{border-bottom:none}
+@media(max-width:750px){.area-grid{grid-template-columns:1fr}}
+@media(max-width:430px){.area-result-row{grid-template-columns:1fr 1fr}}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <button class="back-btn" id="backBtn" onclick="showHome()">← Wapas</button>
+    <div class="header-text">
+      <h1 id="headerTitle">Construction Calculator</h1>
+      <p id="headerSub">Apna calculator chuniye</p>
+    </div>
+  </div>
+</header>
+
+<!-- ══ HOME SCREEN ══ -->
+<div id="homeScreen">
+  <div class="home-title">
+    <h2>🏗️ Construction Calculator</h2>
+    <p>Kaunsa calculator use karna chahte hain?</p>
+  </div>
+  <div class="menu-grid">
+    <div class="menu-card blue" onclick="showScreen('footing')">
+      <span class="icon">🏗️</span>
+      <h3>Footing Volume</h3>
+      <p>Footing ka concrete volume calculate karein — 3D diagram, material quantity (Cement, Sand, Aggregate) sabhi grades ke saath</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ FOOTING SCREEN ══ -->
+<div id="footingContent" style="display:none">
+<main>
+<section class="card">
+  <h2>Footing ki details</h2>
+
+<div class="field">
+    <label for="type">Footing / geometry type</label>
+    <select id="type">
+      <option value="rect">Rectangular isolated footing</option>
+      <option value="square">Square isolated footing</option>
+      <option value="slope">Sloped footing — rectangular / square</option>
+      <option value="steps">Stepped footing / stacked rectangular parts</option>
+      <option value="strip">Strip / wall footing — straight</option>
+      <option value="combined">Combined footing — rectangular</option>
+      <option value="trap">Combined footing — trapezoidal plan</option>
+      <option value="circle">Circular footing</option>
+      <option value="ring">Annular / ring footing</option>
+      <option value="raft">Raft / mat — rectangular, uniform thickness</option>
+      <option value="pile">Pile cap — rectangular solid cap</option>
+    </select>
+  </div>
+
+<div class="row">
+    <div class="field">
+      <label for="unit">Naap ki unit</label>
+      <select id="unit">
+        <option value="m">Meter (m)</option>
+        <option value="mm">Millimeter (mm)</option>
+        <option value="cm">Centimeter (cm)</option>
+        <option value="ft">Feet (ft)</option>
+        <option value="in">Inch (in)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="qty">Same-size footing ki sankhya</label>
+      <input id="qty" type="number" min="1" step="1" value="1">
+    </div>
+  </div>
+
+<div id="fields"></div>
+  <div id="stepControls" class="controls" hidden>
+    <button id="add" type="button">+ Layer</button>
+    <button id="remove" type="button">− Layer</button>
+  </div>
+
+<div id="shapeHelp" class="help"></div>
+  <div id="error" role="alert"></div>
+
+<!-- ── Manual Volume Entry ── -->
+  <div style="border-top:1.5px dashed #c8d5e1;margin:16px 0 14px;padding-top:14px">
+    <div class="manual-toggle-row">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13.5px;font-weight:650;color:#172d43">
+        <input type="checkbox" id="manualToggle" onchange="toggleManualVol()" style="width:18px;height:18px;accent-color:#123149;cursor:pointer;flex-shrink:0">
+        Ya manually volume likho (m³ / ft³)
+      </label>
+      <span class="manual-active-badge" id="manualBadge">✏️ Manual Mode</span>
+    </div>
+    <div class="manual-vol-inputs" id="manualVolBox">
+      <div class="row" style="margin-bottom:8px">
+        <div class="field" style="margin-bottom:0">
+          <label for="manualM3">Volume — m³ (Cubic Meter)</label>
+          <input type="number" id="manualM3" min="0" step="any" placeholder="jaise: 2.5" oninput="syncManualFt3()">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="manualFt3">Volume — ft³ (Cubic Feet)</label>
+          <input type="number" id="manualFt3" min="0" step="any" placeholder="jaise: 88.3" oninput="syncManualM3()">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="manual-apply-btn" onclick="applyManualVol()">✅ Apply karein</button>
+        <button class="manual-clear-btn" onclick="clearManualVol()">✕ Hatao</button>
+      </div>
+      <p style="font-size:12px;color:#7a8fa0;margin:8px 0 0;line-height:1.6">
+        💡 Ek field bharne par doosra auto-convert ho jayega. Apply dabate hi material table update ho jayega.
+      </p>
+    </div>
+  </div>
+
+  <p class="note">
+    <b>Dhyan dein:</b> Yeh geometric concrete-volume calculator hai,
+    structural design ya load-capacity check nahi.
+    PCC, pedestal, piles, excavation aur wastage apne-aap include nahi hote.
+    Volume mein reinforcement deduction nahi ki gayi hai.
+    Construction dimensions approved structural drawing se lein.
+  </p>
+</section>
+
+<section>
+  <div class="card visual">
+    <div class="visual-head">
+      <h2>3D measurement view</h2>
+      <div class="controls">
+        <button id="reset" type="button">Reset view</button>
+        <button id="zoomOut" type="button" aria-label="Zoom out">−</button>
+        <button id="zoomIn" type="button" aria-label="Zoom in">+</button>
+      </div>
+    </div>
+    <canvas id="view" aria-label="Interactive 3D footing with dimension arrows"></canvas>
+    <div class="caption">
+      Mouse / finger se drag karke ghumaiye. Wheel ya + / − se zoom karein.
+      Neela: length · Hara: width / diameter · Narangi: vertical height.
+      Dimension arrows aur extension lines batate hain naap kahan se liya gaya hai.
+      Bahut patli layers dekhne ke liye view ghumayein.
+    </div>
+  </div>
+
+<div class="results" aria-live="polite">
+    <div class="metric">
+      <small>Total concrete volume</small>
+      <strong id="total">—</strong>
+    </div>
+    <div class="metric secondary">
+      <small>Total volume — cubic feet</small>
+      <strong id="feet">—</strong>
+    </div>
+  </div>
+
+<div class="card details">
+    <h2>Calculation details</h2>
+    <table>
+      <thead>
+        <tr><th>Part / group</th><th>Count</th><th>Volume (m³)</th></tr>
+      </thead>
+      <tbody id="breakdown"></tbody>
+    </table>
+    <div id="formula" class="formula"></div>
+    <div id="calculationWork" class="calc-work" aria-live="polite"><b>Step-by-step calculation</b>
+Naap bharte hi yahan actual numbers ke saath calculation dikhegi.</div>    <p class="note">
+      Breakdown ke part-volumes ek footing ke hain; final total mein quantity apply hoti hai.
+      Diagram ek footing dikhata hai. Circular shapes ka drawing faceted hai,
+      lekin volume exact circle formula se calculate hota hai.
+    </p>
+  </div>
+</section>
+</main>
+
+<!-- Material Calculator Section — full width below -->
+<div style="max-width:1250px;margin:0 auto;padding:0 18px 32px">
+  <div class="mat-card">
+    <div class="mat-header">
+      <h2>🧱 Concrete Material — Sabhi Grades (Ek Saath)</h2>
+      <div class="unit-toggle">
+        <button id="unitM3" class="active" onclick="setMatUnit('m3')">m³ (Cubic Meter)</button>
+        <button id="unitFt3" onclick="setMatUnit('ft3')">ft³ (Cubic Feet)</button>
+      </div>
+    </div>
+
+    <p id="matVolLabel" style="font-size:13px;color:#526b80;margin:0 0 14px">Upar dimensions bharte hi yahan sabhi grades ka material automatic dikhenga.</p>
+
+    <div class="mat-table-wrap">
+      <table class="mat-tbl">
+        <thead>
+          <tr>
+            <th>Grade &amp; Mix Ratio</th>
+            <th>🟡 Cement (kg)</th>
+            <th>🛍️ Bags</th>
+            <th>🟠 Sand (kg)</th>
+            <th>🔵 Aggregate (kg)</th>
+            <th>Dry Volume</th>
+          </tr>
+        </thead>
+        <tbody id="matTableBody">
+          <tr><td colspan="6" style="text-align:center;color:#8a9fb0;padding:22px">Dimensions bharne ke baad yahan data aayega…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="mat-note">
+      ⚠️ <b>Note:</b> Ye dry material quantities hain — 1.54 bulking factor include hai.
+      Cement bag = 50 kg. Quantities ek footing ke total wet volume se calculated hain.
+      Water-cement ratio aur wastage site condition ke hisaab se alag ho sakta hai.
+      Structural work ke liye qualified engineer se approve karvayein.
+    </p>
+
+    <!-- Action buttons -->
+    <div class="action-bar">
+      <button class="btn-pdf" onclick="downloadPDF()">
+        📄 Full Report PDF
+      </button>
+      <button class="btn-pdf" onclick="downloadMaterialPDF()" style="background:#1a6b45">
+        🧱 Material PDF
+      </button>
+      <button class="btn-share" onclick="shareWhatsApp()" id="btnWA">
+        💬 WhatsApp Share
+      </button>
+      <button class="btn-copy" onclick="copyText()">
+        📋 Text Copy
+      </button>
+      <span class="copy-toast" id="copyToast">✅ Copy ho gaya!</span>
+    </div>
+  </div>
+</div>
+</div><!-- /footingContent -->
+
+<!-- ══ AREA CALCULATOR SCREEN ══ -->
+<div id="areaScreen">
+  <div class="area-grid">
+    <!-- LEFT: Input Panel -->
+    <div class="card">
+      <h2>📐 Area Calculator</h2>
+
+      <div class="field">
+        <label for="areaShape">Shape chuniye</label>
+        <select id="areaShape" onchange="areaUpdateFields()">
+          <option value="rect">Rectangle (Aayat)</option>
+          <option value="square">Square (Varg)</option>
+          <option value="circle">Circle (Vrit)</option>
+          <option value="triangle">Triangle (Tribhuj)</option>
+          <option value="trapezium">Trapezium (Samantar Chaturbhuj)</option>
+          <option value="lshape">L-Shape Room</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="areaUnit">Naap ki unit</label>
+        <select id="areaUnit" onchange="areaUpdateFields()">
+          <option value="m">Meter (m)</option>
+          <option value="ft">Feet (ft)</option>
+          <option value="cm">Centimeter (cm)</option>
+          <option value="in">Inch (in)</option>
+        </select>
+      </div>
+
+      <div id="areaFields"></div>
+      <div id="areaError" style="color:#9e2530;background:#fff0f1;padding:10px;border-radius:8px;margin-top:10px;display:none;font-size:13px"></div>
+
+      <p class="note" style="margin-top:14px">
+        <b>Note:</b> Finished dimensions bharein. Wastage aur overlap apne hisaab se add karein.
+      </p>
+    </div>
+
+    <!-- RIGHT: Result Panel -->
+    <div>
+      <div id="areaResultSection">
+        <div class="area-result-box">
+          <small>Total Area</small>
+          <strong id="areaMainResult">—</strong>
+        </div>
+        <div class="area-result-row">
+          <div class="area-metric">
+            <small>Square Meter</small>
+            <strong id="areaM2">—</strong>
+          </div>
+          <div class="area-metric">
+            <small>Square Feet</small>
+            <strong id="areaFt2">—</strong>
+          </div>
+          <div class="area-metric">
+            <small>Gaj (Sq.Yd)</small>
+            <strong id="areaGaj">—</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shape Diagram -->
+      <div class="shape-diagram">
+        <div class="shape-canvas-wrap">
+          <canvas id="areaCanvas" width="320" height="240" style="max-width:100%"></canvas>
+        </div>
+      </div>
+
+      <!-- Conversion Table -->
+      <div class="area-table-card">
+        <h2 style="font-size:15px;margin:0 0 12px">Sabhi units mein area</h2>
+        <table class="area-tbl">
+          <thead><tr><th>Unit</th><th style="text-align:right">Area</th></tr></thead>
+          <tbody id="areaConvTable">
+            <tr><td colspan="2" style="text-align:center;color:#8a9fb0;padding:16px">Naap bharne par yahan data aayega…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+const factors = {m:1, mm:0.001, cm:0.01, ft:0.3048, in:0.0254};
+const colours = {L:"#2166c1", W:"#16826d", H:"#b65312"};
+const canvas = $("view");
+const ctx = canvas.getContext("2d");
+let unit = "m", layerCount = 3;
+let faces = [], dimensions = [], parts = [], modelSize = 1;
+let angle = -0.65, elevation = 0.57, zoom = 1;
+let valid = false;
+
+// ── MATERIAL CONSTANTS (top-level so always available) ──
+const GRADES = [
+  { id:"m75", code:"M7.5", label:"Lean / PCC",       ratio:{c:1,s:4,a:8},   sum:13,  use:"PCC, blinding layer, lean concrete" },
+  { id:"m10", code:"M10",  label:"Light Structural",  ratio:{c:1,s:3,a:6},   sum:10,  use:"Plain concrete, small footings" },
+  { id:"m15", code:"M15",  label:"Nominal Mix",       ratio:{c:1,s:2,a:4},   sum:7,   use:"Residential columns, slabs (light)" },
+  { id:"m20", code:"M20",  label:"Standard Mix",      ratio:{c:1,s:1.5,a:3}, sum:5.5, use:"General RCC: beams, columns, slabs" },
+  { id:"m25", code:"M25",  label:"Moderate Strength", ratio:{c:1,s:1,a:2},   sum:4,   use:"Heavy structures, basement, foundations" }
+];
+const DRY_FACTOR = 1.54;
+const CEMENT_DENSITY = 1440;
+const BAG_KG = 50;
+const SAND_DENSITY = 1600;
+const AGG_DENSITY  = 1500;
+let matUnit = "m3";
+let lastTotalM3 = 0;
+
+const fmt = n => Number(n.toPrecision(7)).toLocaleString("en-IN", {
+  maximumFractionDigits:9
+});
+const inputNumber = n => Number(n.toPrecision(10)).toString();
+const displayed = m => `${fmt(m / factors[unit])} ${unit}`;
+
+function field(id, label, meters) {
+  return `<div class="field">
+    <label for="${id}">${label} (${unit})</label>
+    <input id="${id}" data-dimension type="number" min="0"
+      step="any" value="${inputNumber(meters / factors[unit])}">
+  </div>`;
+}
+
+function makeFields() {
+  const t = $("type").value;
+  let html = "";
+  $("stepControls").hidden = t !== "steps";
+
+if (t === "steps") {
+    for (let i=0; i<layerCount; i++) {
+      html += `<div class="layer"><b>Layer ${i+1}${i===0?" — sabse neeche":""}</b>
+        <div class="row">
+          ${field("L"+i, "Length L"+(i+1), Math.max(1, 3-i*0.35))}
+          ${field("W"+i, "Width W"+(i+1), Math.max(0.8, 2.5-i*0.30))}
+          ${field("H"+i, "Height H"+(i+1), 0.25)}
+        </div></div>`;
+    }
+  } else if (t === "circle" || t === "ring") {
+    html += field("D", t==="ring"?"Outer diameter D":"Diameter D", 2);
+    if (t==="ring") html += field("Di", "Inner diameter Di", 1);
+    html += field("H", "Vertical thickness H", 0.4);
+  } else if (t === "trap") {
+    html += field("L", "Length L — end-to-end distance", 4);
+    html += field("W1", "First end ki full width W1", 1.5);
+    html += field("W2", "Second end ki full width W2", 2.5);
+    html += field("H", "Vertical thickness H", 0.45);
+  } else {
+    html += field("L", t==="square"?"Side S":"Length L", t==="strip"?6:2.5);
+    if (t!=="square") html += field("W", "Width W", t==="strip"?0.8:2);
+    if (t==="slope") {
+      html += field("B", "Bottom flat slab thickness B", 0.2);
+      html += field("l", "Top length Lt", 0.6);
+      html += field("w", "Top width Wt", 0.5);
+      html += field("S", "Slope ka VERTICAL rise Hs", 0.45);
+    } else html += field("H", "Vertical thickness H", 0.4);
+  }
+
+$("fields").innerHTML = html;
+
+const help = {
+    slope:"Hs seedhi vertical height hai, slant length nahi. Bottom flat slab aur upar ka sloped solid dono count honge. Square shape ke liye respective length aur width equal rakhein.",
+    steps:"Layers neeche se upar hain, centered aur bina overlap ke stacked hain. Har H us layer ki apni thickness hai, cumulative height nahi. Upper layer lower layer se badi nahi honi chahiye. Maximum 8 layers.",
+    trap:"Plan mein parallel end-widths W1 aur W2 hain. L un ends ke beech perpendicular distance hai. Thickness uniform hai aur dono ends centered hain.",
+    ring:"Inner diameter wali opening concrete volume se subtract hoti hai.",
+    strip:"Sirf seedhi, uniform strip. Intersecting strips ko jodne par junction overlap alag se adjust karein.",
+    raft:"Sirf rectangular solid raft. Openings, thickenings aur drop panels is mode mein include nahi hain.",
+    pile:"Sirf rectangular cap concrete. Pile shafts aur column/pedestal included nahi hain.",
+    combined:"Rectangular uniform-thickness combined footing. Columns/pedestals included nahi hain."
+  };
+  $("shapeHelp").textContent = help[t] || "Finished concrete ki actual dimensions bharein. Height hamesha vertical thickness hai.";
+  calculate();
+}
+
+function val(id) {
+  const x = Number($(id).value);
+  if (!Number.isFinite(x) || x<=0)
+    throw new Error("Sabhi dimensions zero se zyada valid numbers honi chahiye.");
+  return x * factors[unit];
+}
+
+function addFace(points, colour="#64b9b0") {
+  faces.push({points, colour});
+}
+
+function rectangle(L,W,z) {
+  return [
+    [-L/2,-W/2,z], [L/2,-W/2,z],
+    [L/2,W/2,z], [-L/2,W/2,z]
+  ];
+}
+
+function solid(bottom, top, colour) {
+  addFace([...bottom].reverse(), colour);
+  addFace(top, colour);
+  for (let i=0;i<bottom.length;i++) {
+    const j=(i+1)%bottom.length;
+    addFace([bottom[i],bottom[j],top[j],top[i]],colour);
+  }
+}
+
+function dimension(a,b,offset,text,colour) {
+  dimensions.push({a,b,offset,text,colour});
+}
+
+function boxDims(L,W,z,H,tag="") {
+  const o=modelSize*0.12;
+  dimension([-L/2,-W/2,z],[L/2,-W/2,z],[0,-o,0],
+    `${tag?"L"+tag:"L"} = ${displayed(L)}`,colours.L);
+  dimension([L/2,-W/2,z],[L/2,W/2,z],[o,0,0],
+    `${tag?"W"+tag:"W"} = ${displayed(W)}`,colours.W);
+  dimension([-L/2,W/2,z],[-L/2,W/2,z+H],[-o,o,0],
+    `${tag?"H"+tag:"H"} = ${displayed(H)}`,colours.H);
+}
+
+function cylinder(D,Di,H) {
+  const n=64, R=D/2, r=Di/2;
+  const p=(radius,i,z)=>[
+    radius*Math.cos(i*2*Math.PI/n),
+    radius*Math.sin(i*2*Math.PI/n),z
+  ];
+
+for(let i=0;i<n;i++) {
+    const j=i+1;
+    addFace([p(R,i,0),p(R,j,0),p(R,j,H),p(R,i,H)]);
+    if(r>0) {
+      addFace([p(r,j,0),p(r,i,0),p(r,i,H),p(r,j,H)],"#479f98");
+      addFace([p(R,i,H),p(R,j,H),p(r,j,H),p(r,i,H)]);
+      addFace([p(R,j,0),p(R,i,0),p(r,i,0),p(r,j,0)]);
+    } else {
+      addFace([[0,0,H],p(R,i,H),p(R,j,H)]);
+      addFace([[0,0,0],p(R,j,0),p(R,i,0)]);
+    }
+  }
+
+dimension([-R,0,H],[R,0,H],[0,0,modelSize*0.15],
+    `D = ${displayed(D)}`,colours.W);
+  if(r>0) dimension([0,-r,H],[0,r,H],[0,0,modelSize*0.25],
+    `Di = ${displayed(Di)}`,colours.L);
+  dimension([R,0,0],[R,0,H],[modelSize*0.16,0,0],
+    `H = ${displayed(H)}`,colours.H);
+}
+
+function calculate() {
+  faces=[]; dimensions=[]; parts=[]; valid=false;
+  $("error").style.display="none";
+
+try {
+    const qty=Number($("qty").value);
+    if(!Number.isSafeInteger(qty)||qty<1)
+      throw new Error("Footing ki sankhya 1 ya usse zyada whole number honi chahiye.");
+
+const t=$("type").value;
+    let formula="";
+    let calculationSteps=[];
+
+if(t==="steps") {
+      const layers=[];
+      for(let i=0;i<layerCount;i++)
+        layers.push({L:val("L"+i),W:val("W"+i),H:val("H"+i)});
+
+for(let i=1;i<layers.length;i++) {
+        if(layers[i].L>layers[i-1].L+1e-9 ||
+           layers[i].W>layers[i-1].W+1e-9)
+          throw new Error(`Layer ${i+1} ki length/width neeche wali layer se zyada nahi honi chahiye.`);
+      }
+
+modelSize=Math.max(layers[0].L,layers[0].W,
+        layers.reduce((s,p)=>s+p.H,0));
+      let z=0;
+      layers.forEach((p,i)=>{
+        solid(rectangle(p.L,p.W,z),rectangle(p.L,p.W,z+p.H),
+          i%2?"#82c7bd":"#5aada7");
+        boxDims(p.L,p.W,z,p.H,String(i+1));
+        const layerVolume=p.L*p.W*p.H;
+        parts.push({name:`Layer ${i+1}`,v:layerVolume});
+        calculationSteps.push(`Layer ${i+1}: ${fmt(p.L)} × ${fmt(p.W)} × ${fmt(p.H)} = ${fmt(layerVolume)} m³`);
+        z+=p.H;
+      });
+      formula="Har layer: Vᵢ = Lᵢ × Wᵢ × Hᵢ\nEk footing: V = sabhi layer volumes ka sum";
+      calculationSteps.push("Ek footing = " + layers.map((p,i)=>`Layer ${i+1} ka volume`).join(" + ") + "\nEk footing ka volume = " + fmt(layers.reduce((sum,p)=>sum+p.L*p.W*p.H,0)) + " m³");
+    }
+    else if(t==="circle" || t==="ring") {
+      const D=val("D"), Di=t==="ring"?val("Di"):0, H=val("H");
+      if(Di>=D) throw new Error("Inner diameter, outer diameter se chhota hona chahiye.");
+      modelSize=Math.max(D,H);
+      cylinder(D,Di,H);
+      const circleVolume=Math.PI*(D*D-Di*Di)*H/4;
+      parts.push({name:t==="ring"?"Ring concrete":"Circular concrete",v:circleVolume});
+      calculationSteps.push(t==="ring" ? `V = π ÷ 4 × (D² − Di²) × H\n= 3.141593 ÷ 4 × (${fmt(D)}² − ${fmt(Di)}²) × ${fmt(H)}\n= ${fmt(circleVolume)} m³` : `V = π ÷ 4 × D² × H\n= 3.141593 ÷ 4 × ${fmt(D)}² × ${fmt(H)}\n= ${fmt(circleVolume)} m³`);
+      formula=t==="ring"
+        ?"V = π ÷ 4 × (D² − Di²) × H"
+        :"V = π ÷ 4 × D² × H";
+    }
+    else if(t==="trap") {
+      const L=val("L"),W1=val("W1"),W2=val("W2"),H=val("H");
+      modelSize=Math.max(L,W1,W2,H);
+      const b=[
+        [-L/2,-W1/2,0],[L/2,-W2/2,0],
+        [L/2,W2/2,0],[-L/2,W1/2,0]
+      ];
+      solid(b,b.map(p=>[p[0],p[1],H]));
+      const edge=-Math.max(W1,W2)/2;
+      const o=modelSize*0.12;
+      dimension([-L/2,0,0],[L/2,0,0],[0,edge-o,0],
+        `L = ${displayed(L)}`,colours.L);
+      dimension(b[0],b[3],[-o,0,0],
+        `W1 = ${displayed(W1)}`,colours.W);
+      dimension(b[1],b[2],[o,0,0],
+        `W2 = ${displayed(W2)}`,colours.W);
+      dimension(b[3],[b[3][0],b[3][1],H],[-o,o,0],
+        `H = ${displayed(H)}`,colours.H);
+      const trapVolume=L*(W1+W2)*H/2;
+      parts.push({name:"Trapezoidal-plan footing",v:trapVolume});
+      calculationSteps.push(`V = L × (W1 + W2) ÷ 2 × H\n= ${fmt(L)} × (${fmt(W1)} + ${fmt(W2)}) ÷ 2 × ${fmt(H)}\n= ${fmt(trapVolume)} m³`);
+      formula="Plan area = L × (W1 + W2) ÷ 2\nV = Plan area × H";
+    }
+    else {
+      const L=val("L"), W=t==="square"?L:val("W");
+      if(t==="slope") {
+        const B=val("B"),l=val("l"),w=val("w"),S=val("S");
+        if(l>L || w>W)
+          throw new Error("Top length/width bottom length/width se badi nahi ho sakti.");
+        modelSize=Math.max(L,W,B+S);
+        solid(rectangle(L,W,0),rectangle(L,W,B),"#58a9a4");
+        solid(rectangle(L,W,B),rectangle(l,w,B+S),"#82c9bb");
+        boxDims(L,W,0,B);
+        dimensions[2].text=`B = ${displayed(B)}`;
+        const o=modelSize*0.1;
+        dimension([-l/2,-w/2,B+S],[l/2,-w/2,B+S],[0,-o,o],
+          `Lt = ${displayed(l)}`,colours.L);
+        dimension([l/2,-w/2,B+S],[l/2,w/2,B+S],[o,0,o],
+          `Wt = ${displayed(w)}`,colours.W);
+        dimension([l/2,w/2,B],[l/2,w/2,B+S],
+          [L/2-l/2+o,W/2-w/2+o,0],
+          `Hs = ${displayed(S)}`,colours.H);
+
+const A0=L*W, A1=l*w, Am=(L+l)*(W+w)/4;
+        const bottomVolume=L*W*B;
+        const slopedVolume=S*(A0+4*Am+A1)/6;
+        parts.push({name:"Bottom flat slab",v:bottomVolume});
+        parts.push({name:"Sloped upper part",v:slopedVolume});
+        calculationSteps.push(`Bottom slab: ${fmt(L)} × ${fmt(W)} × ${fmt(B)} = ${fmt(bottomVolume)} m³`);
+        calculationSteps.push(`A0 = ${fmt(L)} × ${fmt(W)} = ${fmt(A0)} m²; A1 = ${fmt(l)} × ${fmt(w)} = ${fmt(A1)} m²`);
+        calculationSteps.push(`Am = ((${fmt(L)} + ${fmt(l)}) ÷ 2) × ((${fmt(W)} + ${fmt(w)}) ÷ 2) = ${fmt(Am)} m²`);
+        calculationSteps.push(`Sloped part = ${fmt(S)} ÷ 6 × (${fmt(A0)} + 4 × ${fmt(Am)} + ${fmt(A1)}) = ${fmt(slopedVolume)} m³`);
+        formula="Bottom slab: Vb = L × W × B\n"+
+          "A0 = L × W; A1 = Lt × Wt\n"+
+          "Am = ((L + Lt) ÷ 2) × ((W + Wt) ÷ 2)\n"+
+          "Sloped part: Vs = Hs ÷ 6 × (A0 + 4 × Am + A1)\n"+
+          "Ek footing: V = Vb + Vs\n"+
+          "Yeh formula straight, linearly tapering rectangular sides ke liye hai.";
+      } else {
+        const H=val("H");
+        modelSize=Math.max(L,W,H);
+        solid(rectangle(L,W,0),rectangle(L,W,H));
+        boxDims(L,W,0,H);
+        if(t==="square") {
+          dimensions[0].text=`S = ${displayed(L)}`;
+          dimensions[1].text=`S = ${displayed(W)}`;
+        }
+        const solidVolume=L*W*H;
+        parts.push({name:"Solid footing / cap",v:solidVolume});
+        calculationSteps.push(t==="square" ? `V = S × S × H\n= ${fmt(L)} × ${fmt(L)} × ${fmt(H)}\n= ${fmt(solidVolume)} m³` : `V = L × W × H\n= ${fmt(L)} × ${fmt(W)} × ${fmt(H)}\n= ${fmt(solidVolume)} m³`);
+        formula=t==="square"?"V = S × S × H":"V = L × W × H";
+      }
+    }
+
+const single=parts.reduce((s,p)=>s+p.v,0), total=single*qty;
+    const cubicFeet=total/0.028316846592;
+    if(!Number.isFinite(total)||!Number.isFinite(cubicFeet)||single<=0)
+      throw new Error("Dimensions valid practical range mein bharein.");
+
+$("total").textContent=fmt(total)+" m³";
+    $("feet").textContent=fmt(cubicFeet)+" ft³";
+
+const tbody=$("breakdown");
+    tbody.replaceChildren();
+    function row(name,count,volume) {
+      const tr=document.createElement("tr");
+      [name,String(count),fmt(volume)].forEach(text=>{
+        const td=document.createElement("td");
+        td.textContent=text; tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+    parts.forEach(p=>row(p.name,1,p.v));
+    row("Ek complete footing — subtotal",1,single);
+    row("Sabhi same-size footings — total",qty,total);
+
+$("formula").textContent=formula+
+      "\nTotal = ek footing ka volume × quantity"+
+      "\nCalculation se pehle sabhi dimensions meters mein convert hoti hain.";
+    const workLines = [
+      "STEP-BY-STEP CALCULATION",
+      "Sabhi dimensions ko meters (m) mein convert karke calculation ki gayi hai.",
+      ...calculationSteps,
+      "",
+      `Ek footing ka total volume = ${fmt(single)} m³`,
+      `Footings ki quantity = ${qty}`,
+      `Total volume = ${fmt(single)} × ${qty} = ${fmt(total)} m³`,
+      `Cubic feet mein = ${fmt(total)} ÷ 0.028316846592 = ${fmt(cubicFeet)} ft³`
+    ];
+    $("calculationWork").textContent = workLines.join("\n");
+    valid=true;
+    renderMaterials(total);
+  } catch(e) {
+    $("error").textContent=e.message;
+    $("error").style.display="block";
+    $("total").textContent="—"; $("feet").textContent="—";
+    $("breakdown").replaceChildren();
+    $("formula").textContent="Valid dimensions bharne par calculation dikhegi.";
+    $("calculationWork").textContent="Valid dimensions bharne par actual numbers ke saath calculation dikhegi.";
+    renderMaterials(0);
+  }
+  draw();
+}
+
+// Lightweight offline 3D renderer: orthographic projection + depth sorting.
+function draw() {
+  const width=canvas.clientWidth, height=canvas.clientHeight;
+  if(!width||!height) return;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(width*dpr);
+  canvas.height=Math.round(height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,width,height);
+
+if(!valid) {
+    ctx.fillStyle="#6b7d8d";ctx.font="14px system-ui";
+    ctx.textAlign="center";
+    ctx.fillText("Valid dimensions bharein",width/2,height/2);
+    return;
+  }
+
+const ca=Math.cos(angle),sa=Math.sin(angle);
+  const se=Math.sin(elevation),ce=Math.cos(elevation);
+  function raw(p) {
+    const q=p[0]*sa+p[1]*ca;
+    return [p[0]*ca-p[1]*sa,q*se-p[2]*ce,q*ce+p[2]*se];
+  }
+  const plus=(p,o)=>p.map((x,i)=>x+o[i]);
+  const all=faces.flatMap(f=>f.points);
+  dimensions.forEach(d=>all.push(
+    d.a,d.b,plus(d.a,d.offset),plus(d.b,d.offset)
+  ));
+  const projected=all.map(raw);
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  projected.forEach(p=>{
+    minX=Math.min(minX,p[0]);maxX=Math.max(maxX,p[0]);
+    minY=Math.min(minY,p[1]);maxY=Math.max(maxY,p[1]);
+  });
+
+const scale=Math.min(
+    (width-145)/Math.max(maxX-minX,modelSize*0.15),
+    (height-110)/Math.max(maxY-minY,modelSize*0.15)
+  )*zoom;
+  const cx=(minX+maxX)/2,cy=(minY+maxY)/2;
+  function screen(p) {
+    const q=raw(p);
+    return [width/2+(q[0]-cx)*scale,height/2+(q[1]-cy)*scale,q[2]];
+  }
+
+function shade(hex,pts) {
+    const a=pts[0],b=pts[1],c=pts[2];
+    const u=b.map((x,i)=>x-a[i]),v=c.map((x,i)=>x-a[i]);
+    const n=[
+      u[1]*v[2]-u[2]*v[1],
+      u[2]*v[0]-u[0]*v[2],
+      u[0]*v[1]-u[1]*v[0]
+    ];
+    const len=Math.hypot(...n)||1;
+    const light=0.77+0.23*Math.abs((n[0]*0.25-n[1]*0.4+n[2]*0.88)/len);
+    const rgb=[1,3,5].map(i=>Math.round(parseInt(hex.slice(i,i+2),16)*light));
+    return `rgb(${rgb.join(",")})`;
+  }
+
+const sorted=faces.map(f=>({
+    ...f,depth:f.points.reduce((s,p)=>s+raw(p)[2],0)/f.points.length
+  })).sort((a,b)=>a.depth-b.depth);
+
+sorted.forEach(f=>{
+    const ps=f.points.map(screen);
+    ctx.beginPath();ctx.moveTo(ps[0][0],ps[0][1]);
+    ps.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+    ctx.closePath();
+    ctx.fillStyle=shade(f.colour,f.points);ctx.fill();
+    ctx.strokeStyle="#255c6555";ctx.lineWidth=0.7;ctx.stroke();
+  });
+
+function line(a,b) {
+    ctx.beginPath();ctx.moveTo(a[0],a[1]);
+    ctx.lineTo(b[0],b[1]);ctx.stroke();
+  }
+  function arrow(at,toward) {
+    const a=Math.atan2(toward[1]-at[1],toward[0]-at[0]);
+    ctx.beginPath();ctx.moveTo(at[0],at[1]);
+    ctx.lineTo(at[0]+7*Math.cos(a+0.4),at[1]+7*Math.sin(a+0.4));
+    ctx.moveTo(at[0],at[1]);
+    ctx.lineTo(at[0]+7*Math.cos(a-0.4),at[1]+7*Math.sin(a-0.4));
+    ctx.stroke();
+  }
+
+ctx.font="600 11px system-ui";
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  const labelBoxes=[];
+
+dimensions.forEach(d=>{
+    const a=screen(d.a),b=screen(d.b);
+    const p=screen(plus(d.a,d.offset)),q=screen(plus(d.b,d.offset));
+    ctx.strokeStyle=d.colour;ctx.lineWidth=1;
+    ctx.globalAlpha=0.5;ctx.setLineDash([3,3]);
+    line(a,p);line(b,q);
+    ctx.globalAlpha=1;ctx.setLineDash([]);
+    line(p,q);arrow(p,q);arrow(q,p);
+
+const tw=ctx.measureText(d.text).width+12,th=20;
+    let x=(p[0]+q[0])/2,y=(p[1]+q[1])/2-12;
+    x=Math.max(tw/2+4,Math.min(width-tw/2-4,x));
+    y=Math.max(15,Math.min(height-15,y));
+
+for(let tries=0;tries<12;tries++) {
+      const hit=labelBoxes.some(bx=>
+        Math.abs(x-bx.x)<(tw+bx.w)/2+3 &&
+        Math.abs(y-bx.y)<th+2
+      );
+      if(!hit)break;
+      y+=22;
+      if(y>height-14)y=15;
+    }
+    labelBoxes.push({x,y,w:tw});
+    ctx.globalAlpha=0.45;
+    line([(p[0]+q[0])/2,(p[1]+q[1])/2],[x,y]);
+    ctx.globalAlpha=1;
+    ctx.fillStyle="#ffffffee";ctx.fillRect(x-tw/2,y-th/2,tw,th);
+    ctx.fillStyle=d.colour;ctx.fillText(d.text,x,y);
+  });
+
+ctx.fillStyle="#647e91";ctx.font="11px system-ui";
+  ctx.textAlign="left";ctx.textBaseline="alphabetic";
+  ctx.fillText("3D view • actual input proportions • 1 footing",14,height-14);
+}
+
+$("type").addEventListener("change",makeFields);
+$("fields").addEventListener("input",calculate);
+$("qty").addEventListener("input",calculate);
+
+$("unit").addEventListener("change",()=>{
+  const next=$("unit").value;
+  document.querySelectorAll("[data-dimension]").forEach(el=>{
+    if(el.value!=="" && Number.isFinite(Number(el.value))) {
+      el.value=inputNumber(Number(el.value)*factors[unit]/factors[next]);
+    }
+    const label=el.previousElementSibling;
+    label.textContent=label.textContent.replace(/\([a-z]+\)$/,`(${next})`);
+  });
+  unit=next;calculate();
+});
+
+function resizeLayers(delta) {
+  const next=layerCount+delta;
+  if(next<1||next>8)return;
+  const old={};
+  document.querySelectorAll("[data-dimension]").forEach(el=>old[el.id]=el.value);
+  const previousCount=layerCount;
+  layerCount=next;makeFields();
+  Object.entries(old).forEach(([id,value])=>{if($(id))$(id).value=value;});
+  if(delta>0) {
+    const i=previousCount;
+    ["L","W","H"].forEach(k=>{
+      const previous=Number(old[k+(i-1)]);
+      if(previous>0) $(k+i).value=inputNumber(previous*(k==="H"?1:0.8));
+    });
+  }
+  calculate();
+}
+$("add").onclick=()=>resizeLayers(1);
+$("remove").onclick=()=>resizeLayers(-1);
+$("reset").onclick=()=>{angle=-0.65;elevation=0.57;zoom=1;draw();};
+$("zoomIn").onclick=()=>{zoom=Math.min(3,zoom*1.15);draw();};
+$("zoomOut").onclick=()=>{zoom=Math.max(0.4,zoom/1.15);draw();};
+
+let drag=null;
+canvas.addEventListener("pointerdown",e=>{
+  if(drag)return;
+  drag={id:e.pointerId,x:e.clientX,y:e.clientY};
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove",e=>{
+  if(!drag||drag.id!==e.pointerId)return;
+  angle+=(e.clientX-drag.x)*0.009;
+  elevation=Math.max(0.12,Math.min(1.42,elevation+(e.clientY-drag.y)*0.006));
+  drag={id:e.pointerId,x:e.clientX,y:e.clientY};draw();
+});
+["pointerup","pointercancel","lostpointercapture"].forEach(event=>{
+  canvas.addEventListener(event,e=>{
+    if(drag&&drag.id===e.pointerId)drag=null;
+  });
+});
+canvas.addEventListener("wheel",e=>{
+  e.preventDefault();
+  zoom=Math.max(0.4,Math.min(3,zoom*(e.deltaY<0?1.08:1/1.08)));
+  draw();
+},{passive:false});
+window.addEventListener("resize",draw);
+
+// ════════════════════════════════════════════
+//  MATERIAL CALCULATOR FUNCTIONS
+// ════════════════════════════════════════════
+
+function setMatUnit(u) {
+  matUnit = u;
+  $("unitM3").classList.toggle("active", u==="m3");
+  $("unitFt3").classList.toggle("active", u==="ft3");
+  renderMaterials(lastTotalM3);
+}
+
+// ── Manual Volume Entry ──
+let manualMode = false;
+let manualM3Value = 0;
+
+function toggleManualVol() {
+  manualMode = $("manualToggle").checked;
+  $("manualVolBox").classList.toggle("open", manualMode);
+  $("manualBadge").classList.toggle("show", manualMode);
+  if (!manualMode) {
+    // Wapas calculated volume pe aa jao
+    clearManualVol();
+  }
+}
+
+function syncManualFt3() {
+  const m3 = parseFloat($("manualM3").value);
+  if (!isNaN(m3) && m3 > 0) {
+    $("manualFt3").value = (m3 / 0.028316846592).toFixed(4);
+  } else {
+    $("manualFt3").value = "";
+  }
+}
+
+function syncManualM3() {
+  const ft3 = parseFloat($("manualFt3").value);
+  if (!isNaN(ft3) && ft3 > 0) {
+    $("manualM3").value = (ft3 * 0.028316846592).toFixed(6);
+  } else {
+    $("manualM3").value = "";
+  }
+}
+
+function applyManualVol() {
+  const m3 = parseFloat($("manualM3").value);
+  const ft3 = parseFloat($("manualFt3").value);
+  let finalM3 = 0;
+
+  if (!isNaN(m3) && m3 > 0) {
+    finalM3 = m3;
+  } else if (!isNaN(ft3) && ft3 > 0) {
+    finalM3 = ft3 * 0.028316846592;
+  } else {
+    alert("Kripya m³ ya ft³ mein se ek valid value bharein.");
+    return;
+  }
+
+  manualM3Value = finalM3;
+  // Dono sync karein
+  $("manualM3").value = finalM3.toFixed(6);
+  $("manualFt3").value = (finalM3 / 0.028316846592).toFixed(4);
+  renderMaterials(finalM3);
+}
+
+function clearManualVol() {
+  $("manualM3").value = "";
+  $("manualFt3").value = "";
+  manualM3Value = 0;
+  // Calculated value wapas use karein
+  const calcVol = valid ? lastTotalM3 : 0;
+  if (calcVol > 0) {
+    renderMaterials(calcVol);
+  } else {
+    renderMaterials(0);
+  }
+}
+
+function fmtMat(n) {
+  return Number(n.toPrecision(5)).toLocaleString("en-IN", {maximumFractionDigits:3});
+}
+
+function toVol(m3) {
+  return matUnit === "m3"
+    ? `${fmtMat(m3)} m³`
+    : `${fmtMat(m3 / 0.028316846592)} ft³`;
+}
+
+function renderMaterials(totalM3) {
+  // Manual mode mein agar calculated value aa rahi hai toh override karo manual se
+  if (manualMode && manualM3Value > 0 && totalM3 !== manualM3Value) {
+    totalM3 = manualM3Value;
+  }
+  lastTotalM3 = totalM3;
+  const tbody = $("matTableBody");
+  const label = $("matVolLabel");
+
+  if (!totalM3 || totalM3 <= 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#8a9fb0;padding:22px">Dimensions bharne ke baad yahan data aayega…</td></tr>';
+    label.textContent = "Upar dimensions bharte hi yahan sabhi grades ka material automatic dikhenga.";
+    return;
+  }
+
+  const volM3  = totalM3;
+  const volFt3 = totalM3 / 0.028316846592;
+  const modeTag = (manualMode && manualM3Value > 0)
+    ? ` &nbsp;<span style="background:#f0c040;color:#7a5c00;border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700">✏️ Manual</span>`
+    : "";
+  label.innerHTML =
+    `<b>Concrete volume:</b> <span style="color:#123149;font-weight:700">${fmtMat(volM3)} m³</span>` +
+    ` &nbsp;|&nbsp; <span style="color:#123149;font-weight:700">${fmtMat(volFt3)} ft³</span>` +
+    modeTag +
+    ` — Sabhi 5 grades ka material neeche table mein hai:`;
+
+  const colourClass = {m75:"g-m75",m10:"g-m10",m15:"g-m15",m20:"g-m20",m25:"g-m25"};
+
+  tbody.innerHTML = GRADES.map(g => {
+    const dry       = volM3 * DRY_FACTOR;
+    const cementM3  = dry / g.sum;
+    const sandM3    = cementM3 * g.ratio.s;
+    const aggM3     = cementM3 * g.ratio.a;
+    const cementKg  = cementM3 * CEMENT_DENSITY;
+    const cementBag = cementKg / BAG_KG;
+    const sandKg    = sandM3   * SAND_DENSITY;
+    const aggKg     = aggM3    * AGG_DENSITY;
+
+    const dryDisp = matUnit === "m3"
+      ? `${fmtMat(dry)} m³`
+      : `${fmtMat(dry / 0.028316846592)} ft³`;
+
+    const cVolDisp = toVol(cementM3);
+    const sVolDisp = toVol(sandM3);
+    const aVolDisp = toVol(aggM3);
+
+    return `<tr class="${colourClass[g.id]}">
+      <td class="grade-name">
+        <b>${g.code}</b>
+        <span>1 : ${g.ratio.s} : ${g.ratio.a} &nbsp;|&nbsp; ${g.label}</span>
+        <span style="font-size:10.5px;color:#a0b0bc">${g.use}</span>
+      </td>
+      <td>
+        <span class="kg">${cVolDisp}</span>
+        <span class="sub">${fmtMat(cementKg)} kg</span>
+      </td>
+      <td>
+        <span class="bags">${Math.ceil(cementBag)} bags</span>
+      </td>
+      <td>
+        <span class="kg">${sVolDisp}</span>
+        <span class="sub">${fmtMat(sandKg)} kg</span>
+      </td>
+      <td>
+        <span class="kg">${aVolDisp}</span>
+        <span class="sub">${fmtMat(aggKg)} kg</span>
+      </td>
+      <td>
+        <span class="kg">${dryDisp}</span>
+        <span class="sub">${fmtMat(volM3)} × 1.54</span>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+// ── PDF Download / Print — opens a fully styled popup window ──
+function downloadPDF() {
+  if (lastTotalM3 <= 0) {
+    alert("Pehle footing ki dimensions bharein — tab PDF bana sakenge.");
+    return;
+  }
+
+  const volM3  = lastTotalM3;
+  const volFt3 = volM3 / 0.028316846592;
+  const qty    = Number($("qty").value) || 1;
+  const unitText = $("unit").options[$("unit").selectedIndex].text;
+  const typeText = $("type").options[$("type").selectedIndex].text;
+  const dateStr  = new Date().toLocaleString("en-IN");
+
+  // — Canvas diagram as base64 image —
+  let diagramImg = "";
+  try { diagramImg = canvas.toDataURL("image/png"); } catch(e) {}
+
+  // — Dimension rows —
+  const dimRows = [
+    ["Footing Type", typeText],
+    ["Measurement Unit", unitText],
+    ["Footing Quantity", qty + " nos"]
+  ];
+  document.querySelectorAll("[data-dimension]").forEach(el => {
+    const lbl = el.previousElementSibling;
+    if (lbl && el.value && Number(el.value) > 0)
+      dimRows.push([lbl.textContent.replace(/\s*\([^)]+\)\s*$/,"").trim(), el.value + " " + $("unit").value]);
+  });
+  const dimHTML = dimRows.map(([k,v]) =>
+    `<tr><td style="background:#f0f4f8;font-weight:600;color:#334e68;width:45%;padding:7px 12px;border-bottom:1px solid #e1e8ee">${k}</td>
+     <td style="padding:7px 12px;border-bottom:1px solid #e1e8ee;font-weight:500">${v}</td></tr>`
+  ).join("");
+
+  // — Volume breakdown rows —
+  const bkRows = Array.from($("breakdown").querySelectorAll("tr"));
+  const bkHTML = bkRows.map(r => {
+    const cells = Array.from(r.querySelectorAll("td"));
+    return `<tr>${cells.map((c,i) =>
+      `<td style="padding:6px 10px;border-bottom:1px solid #eaeff5;${i===2?"text-align:right;font-weight:700":""}">${c.textContent}</td>`
+    ).join("")}</tr>`;
+  }).join("");
+
+  // — Calculation steps —
+  const calcText = $("calculationWork").textContent || "";
+
+  // — Material table rows —
+  const pdfIsFt3 = matUnit === "ft3";
+  const pdfUnitLbl = pdfIsFt3 ? "ft³" : "m³";
+  function pdfToU(m3val) {
+    return pdfIsFt3
+      ? fmtMat(m3val / 0.028316846592) + " ft³"
+      : fmtMat(m3val) + " m³";
+  }
+  const matGradeColours = {m75:"#d4a017",m10:"#2a88c7",m15:"#28a063",m20:"#7c48d4",m25:"#d44840"};
+  const matHTML = GRADES.map(g => {
+    const dry  = volM3 * DRY_FACTOR;
+    const cM3  = dry / g.sum;
+    const sM3  = cM3 * g.ratio.s;
+    const aM3  = cM3 * g.ratio.a;
+    const cKg  = cM3 * CEMENT_DENSITY;
+    const bags = cKg / BAG_KG;
+    const sKg  = sM3 * SAND_DENSITY;
+    const aKg  = aM3 * AGG_DENSITY;
+    const bc   = matGradeColours[g.id];
+    const dryDisp = pdfIsFt3 ? fmtMat(dry / 0.028316846592) + " ft³" : fmtMat(dry) + " m³";
+    return `<tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #eaeff5;border-left:4px solid ${bc};font-weight:700">
+        ${g.code}<br><span style="font-size:10px;color:#6b8399;font-weight:400">1:${g.ratio.s}:${g.ratio.a} — ${g.label}</span>
+      </td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eaeff5;text-align:center;font-weight:700">${pdfToU(cM3)}<br><span style="font-size:10px;color:#6b8399;font-weight:400">${fmtMat(cKg)} kg</span></td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eaeff5;text-align:center;font-weight:700;color:#1a5c3a">${Math.ceil(bags)} bags</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eaeff5;text-align:center;font-weight:700">${pdfToU(sM3)}<br><span style="font-size:10px;color:#6b8399;font-weight:400">${fmtMat(sKg)} kg</span></td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eaeff5;text-align:center;font-weight:700">${pdfToU(aM3)}<br><span style="font-size:10px;color:#6b8399;font-weight:400">${fmtMat(aKg)} kg</span></td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eaeff5;text-align:center;font-weight:600;color:#335">${dryDisp}</td>
+    </tr>`;
+  }).join("");
+
+  // — Build the full HTML document for the popup —
+  const html = `<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>Footing Report — PDF</title>
+<style>
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{margin:0;padding:0;font-family:system-ui,Arial,sans-serif;font-size:12px;color:#172d43;background:#fff}
+  .page{max-width:210mm;margin:0 auto;padding:14mm 14mm 10mm}
+
+  /* Header */
+  .hdr{background:#123149;color:#fff;padding:14px 20px;border-radius:10px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  .hdr h1{margin:0;font-size:17px;font-weight:700}
+  .hdr .meta{font-size:10px;color:#a8cce0;text-align:right}
+
+  /* Sections */
+  .sec{margin-bottom:13px;border:1px solid #d8e4ee;border-radius:9px;overflow:hidden;page-break-inside:avoid}
+  .sec-title{background:#eef3f8;padding:7px 14px;font-weight:700;font-size:11.5px;color:#123149;border-bottom:1px solid #d8e4ee;letter-spacing:.2px}
+
+  /* Two-column layout for dims + diagram */
+  .two-col{display:flex;gap:13px;padding:12px 14px}
+  .col-left{flex:1;min-width:0}
+  .col-right{flex:1;min-width:0;text-align:center}
+  .col-right img{max-width:100%;max-height:220px;border:1px solid #d8e4ee;border-radius:8px;background:#f4f9fc}
+
+  /* Volume boxes */
+  .vol-row{display:flex;gap:10px;padding:10px 14px}
+  .vol-box{flex:1;background:#123149;color:#fff;border-radius:8px;padding:10px 14px;text-align:center}
+  .vol-box.green{background:#1b5c3a}
+  .vol-box .lbl{font-size:9.5px;color:#a8cce0;margin-bottom:3px}
+  .vol-box .val{font-size:17px;font-weight:700}
+
+  /* Breakdown table */
+  .bk-tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin:0 14px 10px;width:calc(100% - 28px)}
+  .bk-tbl th{background:#f0f4f8;color:#526b80;padding:6px 10px;font-weight:600;border-bottom:1px solid #d8e4ee;text-align:left}
+  .bk-tbl th:last-child{text-align:right}
+
+  /* Calculation box */
+  .calc-box{background:#f5f8fb;margin:0 14px 12px;padding:10px 12px;border-radius:7px;font-size:10.5px;white-space:pre-wrap;line-height:1.7;color:#263f52;border:1px solid #e1e8ee;max-height:200px;overflow:hidden}
+
+  /* Material table */
+  .mat-tbl{width:100%;border-collapse:collapse;font-size:11px}
+  .mat-tbl th{background:#123149;color:#fff;padding:8px 10px;text-align:center;font-weight:600}
+  .mat-tbl th:first-child{text-align:left}
+  .mat-tbl td{vertical-align:middle}
+
+  /* Footer */
+  .footer{font-size:9.5px;color:#8a9fb0;text-align:center;margin-top:12px;padding-top:8px;border-top:1px solid #e1e8ee;line-height:1.5}
+
+  /* Print button (hidden on print) */
+  .print-btn{background:#123149;color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin:0 auto 14px;display:block}
+  @media print{.print-btn{display:none!important}.page{padding:8mm 10mm}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <h1>🏗️ Footing Concrete Calculator — Report</h1>
+    <div class="meta">Generated: ${dateStr}</div>
+  </div>
+
+  <!-- SECTION 1: Dimensions + 3D Diagram side by side -->
+  <div class="sec">
+    <div class="sec-title">📐 Footing Details &amp; 3D Diagram</div>
+    <div class="two-col">
+      <div class="col-left">
+        <table style="width:100%;border-collapse:collapse;font-size:11.5px">${dimHTML}</table>
+      </div>
+      <div class="col-right">
+        ${diagramImg
+          ? `<img src="${diagramImg}" alt="3D Footing Diagram">`
+          : `<div style="height:180px;background:#f0f4f8;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#8a9fb0;font-size:12px">3D Diagram</div>`
+        }
+        <div style="font-size:9.5px;color:#7a8fa0;margin-top:5px">3D View — Footing ka naap</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: Volume -->
+  <div class="sec">
+    <div class="sec-title">📦 Concrete Volume</div>
+    <div class="vol-row">
+      <div class="vol-box"><div class="lbl">Total Volume</div><div class="val">${fmtMat(volM3)} m³</div></div>
+      <div class="vol-box"><div class="lbl">Total Volume</div><div class="val">${fmtMat(volFt3)} ft³</div></div>
+      <div class="vol-box green"><div class="lbl">Footing Quantity</div><div class="val">${qty} nos</div></div>
+    </div>
+    <div style="padding:4px 14px 4px">
+      <table class="bk-tbl">
+        <thead><tr><th>Part</th><th>Count</th><th style="text-align:right">Volume (m³)</th></tr></thead>
+        <tbody>${bkHTML}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 3: Calculation Steps -->
+  <div class="sec">
+    <div class="sec-title">🧮 Step-by-step Calculation</div>
+    <div class="calc-box">${calcText}</div>
+  </div>
+
+  <!-- SECTION 4: Material Table -->
+  <div class="sec">
+    <div class="sec-title">🧱 Material Quantity — Sabhi Grades (Dry Material, 1.54 Bulking Factor)</div>
+    <table class="mat-tbl">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:8px 10px">Grade &amp; Mix Ratio</th>
+          <th>🟡 Cement (${pdfUnitLbl})</th>
+          <th>🛍️ Bags</th>
+          <th>🟠 Sand (${pdfUnitLbl})</th>
+          <th>🔵 Aggregate (${pdfUnitLbl})</th>
+          <th>Dry Vol (${pdfUnitLbl})</th>
+        </tr>
+      </thead>
+      <tbody>${matHTML}</tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    ⚠️ Ye dry material quantities hain — bulking factor 1.54 included. Cement bag = 50 kg.
+    Water-cement ratio aur wastage site condition ke hisaab se adjust karein.
+    Structural work ke liye qualified engineer se approve karvayein.
+  </div>
+
+</div>
+</body>
+</html>`;
+
+  // Open popup and write the HTML
+  const win = window.open("", "_blank", "width=900,height=700,scrollbars=yes");
+  if (!win) {
+    alert("Popup block ho gaya. Browser mein popup allow karein aur dobara try karein.");
+    return;
+  }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
+// ── Material-only PDF ──
+function downloadMaterialPDF() {
+  if (lastTotalM3 <= 0) {
+    alert("Pehle footing ki dimensions bharein ya manual volume daalo — tab PDF bana sakenge.");
+    return;
+  }
+
+  const volM3  = lastTotalM3;
+  const volFt3 = volM3 / 0.028316846592;
+  const dryM3  = volM3 * DRY_FACTOR;
+  const dryFt3 = dryM3 / 0.028316846592;
+  const isFt3  = matUnit === "ft3";
+  const unitLabel = isFt3 ? "ft³" : "m³";
+  const dateStr = new Date().toLocaleString("en-IN");
+  const modeLabel = (manualMode && manualM3Value > 0) ? "Manual Entry" : "Calculated from dimensions";
+
+  // Helper: m³ value ko selected unit mein convert karo
+  function toU(m3val) {
+    return isFt3
+      ? fmtMat(m3val / 0.028316846592) + " ft³"
+      : fmtMat(m3val) + " m³";
+  }
+
+  const matGradeColours = {m75:"#d4a017",m10:"#2a88c7",m15:"#28a063",m20:"#7c48d4",m25:"#d44840"};
+
+  const matRows = GRADES.map(g => {
+    const dry  = dryM3;
+    const cM3  = dry / g.sum;
+    const sM3  = cM3 * g.ratio.s;
+    const aM3  = cM3 * g.ratio.a;
+    const cKg  = cM3 * CEMENT_DENSITY;
+    const bags = Math.ceil(cKg / BAG_KG);
+    const sKg  = sM3 * SAND_DENSITY;
+    const aKg  = aM3 * AGG_DENSITY;
+    const bc   = matGradeColours[g.id];
+    return `<tr>
+      <td style="padding:11px 13px;border-bottom:1px solid #eaeff5;border-left:5px solid ${bc}">
+        <b style="font-size:14px;color:#172d43">${g.code}</b>
+        <span style="display:block;font-size:10.5px;color:#526b80;margin-top:2px">1 : ${g.ratio.s} : ${g.ratio.a} &nbsp;|&nbsp; ${g.label}</span>
+        <span style="display:block;font-size:10px;color:#8a9fb0;margin-top:1px">${g.use}</span>
+      </td>
+      <td style="padding:11px 10px;border-bottom:1px solid #eaeff5;text-align:center">
+        <b style="font-size:14px;color:#172d43">${toU(cM3)}</b>
+        <span style="display:block;font-size:10px;color:#7a8fa0">${fmtMat(cKg)} kg</span>
+      </td>
+      <td style="padding:11px 10px;border-bottom:1px solid #eaeff5;text-align:center">
+        <b style="font-size:18px;color:#1a5c3a">${bags}</b>
+        <span style="display:block;font-size:10px;color:#7a8fa0">bags (50 kg)</span>
+      </td>
+      <td style="padding:11px 10px;border-bottom:1px solid #eaeff5;text-align:center">
+        <b style="font-size:14px;color:#172d43">${toU(sM3)}</b>
+        <span style="display:block;font-size:10px;color:#7a8fa0">${fmtMat(sKg)} kg</span>
+      </td>
+      <td style="padding:11px 10px;border-bottom:1px solid #eaeff5;text-align:center">
+        <b style="font-size:14px;color:#172d43">${toU(aM3)}</b>
+        <span style="display:block;font-size:10px;color:#7a8fa0">${fmtMat(aKg)} kg</span>
+      </td>
+    </tr>`;
+  }).join("");
+
+  const html = `<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>Concrete Material — PDF</title>
+<style>
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{margin:0;padding:0;font-family:system-ui,Arial,sans-serif;font-size:12px;color:#172d43;background:#fff}
+  .page{max-width:210mm;margin:0 auto;padding:12mm 14mm 10mm}
+
+  /* Volume hero — sabse pehle, bada aur bold */
+  .vol-hero{background:#123149;color:#fff;border-radius:12px;padding:18px 22px;margin-bottom:16px}
+  .vol-hero-title{font-size:11px;color:#a8cce0;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px}
+  .vol-hero-row{display:flex;gap:0;border-radius:9px;overflow:hidden}
+  .vol-cell{flex:1;background:#1b4a6b;padding:14px 16px;text-align:center;border-right:1px solid #123149}
+  .vol-cell:last-child{border-right:none;background:#1a5c3a}
+  .vol-cell .vlbl{font-size:10px;color:#a8cce0;margin-bottom:5px}
+  .vol-cell .vval{font-size:24px;font-weight:800;line-height:1}
+  .vol-cell .vsub{font-size:10px;color:#a8cce0;margin-top:4px}
+  .vol-meta{margin-top:10px;font-size:10px;color:#7ab0cc;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
+
+  /* Header */
+  .hdr{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #e1e8ee}
+  .hdr h1{margin:0;font-size:15px;font-weight:700;color:#123149}
+  .hdr .meta{font-size:9.5px;color:#8a9fb0;text-align:right;line-height:1.6}
+
+  /* Table */
+  .tbl-wrap{border:1px solid #d8e4ee;border-radius:10px;overflow:hidden;margin-bottom:14px}
+  .tbl-title{background:#eef3f8;padding:9px 14px;font-weight:700;font-size:12px;color:#123149;border-bottom:1px solid #d8e4ee}
+  table{width:100%;border-collapse:collapse}
+  thead tr{background:#123149}
+  thead th{color:#c7dde9;font-weight:600;padding:10px 10px;text-align:center;font-size:11px;white-space:nowrap}
+  thead th:first-child{text-align:left;padding-left:14px}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#f8fbfd}
+
+  /* Footer */
+  .footer{font-size:9.5px;color:#8a9fb0;text-align:center;margin-top:10px;padding-top:8px;border-top:1px solid #e1e8ee;line-height:1.6}
+
+  /* Print button */
+  .print-btn{background:#123149;color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin:0 auto 16px;display:block}
+  @media print{.print-btn{display:none!important}.page{padding:6mm 10mm}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <h1>🧱 Concrete Material Calculator</h1>
+    <div class="meta">Date: ${dateStr}</div>
+  </div>
+
+  <!-- VOLUME — SABSE PEHLE, BADA -->
+  <div class="vol-hero">
+    <div class="vol-hero-title">📦 Concrete Volume — Jiska material nikala gaya hai</div>
+    <div class="vol-hero-row">
+      <div class="vol-cell">
+        <div class="vlbl">${isFt3 ? "Cubic Feet (ft³)" : "Cubic Meter (m³)"}</div>
+        <div class="vval">${isFt3 ? fmtMat(volFt3) : fmtMat(volM3)}</div>
+        <div class="vsub">${unitLabel}</div>
+      </div>
+      <div class="vol-cell">
+        <div class="vlbl">${isFt3 ? "Cubic Meter (m³)" : "Cubic Feet (ft³)"}</div>
+        <div class="vval">${isFt3 ? fmtMat(volM3) : fmtMat(volFt3)}</div>
+        <div class="vsub">${isFt3 ? "m³" : "ft³"}</div>
+      </div>
+      <div class="vol-cell">
+        <div class="vlbl">Dry Volume (×1.54)</div>
+        <div class="vval">${isFt3 ? fmtMat(dryFt3) : fmtMat(dryM3)}</div>
+        <div class="vsub">${unitLabel} dry</div>
+      </div>
+    </div>
+    <div class="vol-meta">
+      <span>📌 Volume source: ${modeLabel}</span>
+      <span>📦 Unit: ${isFt3 ? "Cubic Feet (ft³)" : "Cubic Meter (m³)"}</span>
+    </div>
+  </div>
+
+  <!-- MATERIAL TABLE -->
+  <div class="tbl-wrap">
+    <div class="tbl-title">📊 Grade-wise Material Quantity (Dry, 1.54 Bulking Factor)</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;padding-left:14px">Grade &amp; Mix Ratio</th>
+          <th>🟡 Cement (${unitLabel})</th>
+          <th>🛍️ Bags</th>
+          <th>🟠 Sand (${unitLabel})</th>
+          <th>🔵 Aggregate (${unitLabel})</th>
+        </tr>
+      </thead>
+      <tbody>${matRows}</tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    ⚠️ Ye dry material quantities hain — 1.54 bulking factor included &nbsp;|&nbsp; Cement bag = 50 kg &nbsp;|&nbsp; Water-cement ratio aur wastage site condition ke hisaab se adjust karein.<br>
+    Structural work ke liye qualified engineer se approve karvayein.
+  </div>
+
+</div>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank", "width=860,height=680,scrollbars=yes");
+  if (!win) {
+    alert("Popup block ho gaya. Browser mein popup allow karein aur dobara try karein.");
+    return;
+  }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
+// ── Build shareable text ──
+function buildShareText() {
+  if (lastTotalM3 <= 0) return null;
+  const volM3  = lastTotalM3;
+  const volFt3 = lastTotalM3 / 0.028316846592;
+  let txt = `🏗️ *Footing Concrete Material Calculator*\n`;
+  txt += `📦 Volume: ${fmtMat(volM3)} m³ | ${fmtMat(volFt3)} ft³\n\n`;
+  txt += `${"Grade".padEnd(6)} | ${"Mix".padEnd(10)} | ${"Cement kg".padEnd(11)} | ${"Bags".padEnd(6)} | ${"Sand kg".padEnd(9)} | ${"Agg. kg".padEnd(9)}\n`;
+  txt += `${"─".repeat(70)}\n`;
+  GRADES.forEach(g => {
+    const dry      = volM3 * DRY_FACTOR;
+    const cM3      = dry / g.sum;
+    const cKg      = cM3 * CEMENT_DENSITY;
+    const bags     = cKg / BAG_KG;
+    const sKg      = cM3 * g.ratio.s * SAND_DENSITY;
+    const aKg      = cM3 * g.ratio.a * AGG_DENSITY;
+    txt += `${g.code.padEnd(6)} | ${("1:"+g.ratio.s+":"+g.ratio.a).padEnd(10)} | ${fmtMat(cKg).padEnd(11)} | ${Math.ceil(bags).toString().padEnd(6)} | ${fmtMat(sKg).padEnd(9)} | ${fmtMat(aKg)}\n`;
+  });
+  txt += `\n⚠️ Dry material (1.54 factor). Cement bag = 50 kg.`;
+  return txt;
+}
+
+// ── WhatsApp Share ──
+function shareWhatsApp() {
+  const txt = buildShareText();
+  if (!txt) { alert("Pehle dimensions bharein."); return; }
+  const url = "https://wa.me/?text=" + encodeURIComponent(txt);
+  window.open(url, "_blank");
+}
+
+// ── Copy to clipboard ──
+function copyText() {
+  const txt = buildShareText();
+  if (!txt) { alert("Pehle dimensions bharein."); return; }
+  navigator.clipboard.writeText(txt).then(() => {
+    const t = $("copyToast");
+    t.style.display = "flex";
+    setTimeout(() => t.style.display = "none", 2500);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement("textarea");
+    ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); document.body.removeChild(ta);
+    const t = $("copyToast");
+    t.style.display = "flex";
+    setTimeout(() => t.style.display = "none", 2500);
+  });
+}
+
+// ── makeFields triggers calculate() which calls renderMaterials(total) ──
+makeFields();
+
+// ════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════
+function showHome() {
+  document.getElementById("homeScreen").style.display = "block";
+  document.getElementById("footingContent").style.display = "none";
+  document.getElementById("areaScreen").style.display = "none";
+  document.getElementById("backBtn").style.display = "none";
+  document.getElementById("headerTitle").textContent = "Construction Calculator";
+  document.getElementById("headerSub").textContent = "Apna calculator chuniye";
+}
+
+function showScreen(screen) {
+  document.getElementById("homeScreen").style.display = "none";
+  document.getElementById("footingContent").style.display = screen === "footing" ? "block" : "none";
+  document.getElementById("areaScreen").style.display = screen === "area" ? "block" : "none";
+  document.getElementById("backBtn").style.display = "flex";
+  if (screen === "footing") {
+    document.getElementById("headerTitle").textContent = "Footing Volume Calculator";
+    document.getElementById("headerSub").textContent = "Footing chuniye → naap bhariye → 3D view aur material";
+    draw();
+  } else if (screen === "area") {
+    document.getElementById("headerTitle").textContent = "Area Calculator";
+    document.getElementById("headerSub").textContent = "Room, plot, wall ka area — m², ft², gaj mein";
+    areaUpdateFields();
+  }
+}
+
+// ════════════════════════════════════════════
+//  AREA CALCULATOR
+// ════════════════════════════════════════════
+const areaFactors = { m:1, ft:0.3048, cm:0.01, in:0.0254 };
+
+function areaFmtNum(n) {
+  if (n >= 1000) return n.toLocaleString("en-IN", {maximumFractionDigits:1});
+  if (n >= 100)  return n.toLocaleString("en-IN", {maximumFractionDigits:2});
+  return n.toLocaleString("en-IN", {maximumFractionDigits:3});
+}
+
+function areaField(id, label) {
+  const u = document.getElementById("areaUnit").value;
+  return `<div class="field">
+    <label for="${id}">${label} (${u})</label>
+    <input id="${id}" type="number" min="0" step="any" oninput="areaCalculate()" placeholder="0">
+  </div>`;
+}
+
+function areaUpdateFields() {
+  const shape = document.getElementById("areaShape").value;
+  const u = document.getElementById("areaUnit").value;
+  let html = "";
+  if (shape === "rect") {
+    html += areaField("aF_L","Lambai (Length)") + areaField("aF_W","Chaurai (Width)");
+  } else if (shape === "square") {
+    html += areaField("aF_S","Bahu (Side)");
+  } else if (shape === "circle") {
+    html += areaField("aF_D","Diameter (D)");
+  } else if (shape === "triangle") {
+    html += areaField("aF_B","Aadhar (Base)") + areaField("aF_H","Unchai (Height)");
+  } else if (shape === "trapezium") {
+    html += areaField("aF_A","Pehli Bahu (a)") + areaField("aF_B2","Doosri Bahu (b)") + areaField("aF_H2","Unchai (h)");
+  } else if (shape === "lshape") {
+    html += `<div style="font-size:12px;color:#526b80;background:#f5f8fb;padding:10px;border-radius:8px;margin-bottom:12px">
+      L-shape = do rectangle. Pehle bade ka naap, phir chote ka naap bharein.
+    </div>`;
+    html += `<b style="font-size:13px;color:#123149">Bada Rectangle</b>`;
+    html += areaField("aF_L1","Lambai L1") + areaField("aF_W1","Chaurai W1");
+    html += `<b style="font-size:13px;color:#123149">Chota Rectangle</b>`;
+    html += areaField("aF_L2","Lambai L2") + areaField("aF_W2","Chaurai W2");
+  }
+  document.getElementById("areaFields").innerHTML = html;
+  areaCalculate();
+}
+
+function areaGetVal(id) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  const v = parseFloat(el.value);
+  if (!isFinite(v) || v <= 0) return null;
+  return v * areaFactors[document.getElementById("areaUnit").value];
+}
+
+function areaCalculate() {
+  const shape = document.getElementById("areaShape").value;
+  const errEl = document.getElementById("areaError");
+  errEl.style.display = "none";
+  let areaM2 = null;
+  let dims = {};
+
+  try {
+    if (shape === "rect") {
+      const L = areaGetVal("aF_L"), W = areaGetVal("aF_W");
+      if (!L || !W) throw new Error("Lambai aur Chaurai bharein.");
+      areaM2 = L * W; dims = {L,W};
+    } else if (shape === "square") {
+      const S = areaGetVal("aF_S");
+      if (!S) throw new Error("Bahu (Side) bharein.");
+      areaM2 = S * S; dims = {S};
+    } else if (shape === "circle") {
+      const D = areaGetVal("aF_D");
+      if (!D) throw new Error("Diameter bharein.");
+      areaM2 = Math.PI * D * D / 4; dims = {D};
+    } else if (shape === "triangle") {
+      const B = areaGetVal("aF_B"), H = areaGetVal("aF_H");
+      if (!B || !H) throw new Error("Aadhar aur Unchai bharein.");
+      areaM2 = 0.5 * B * H; dims = {B,H};
+    } else if (shape === "trapezium") {
+      const a = areaGetVal("aF_A"), b = areaGetVal("aF_B2"), h = areaGetVal("aF_H2");
+      if (!a || !b || !h) throw new Error("Dono bahu aur unchai bharein.");
+      areaM2 = 0.5 * (a + b) * h; dims = {a,b,h};
+    } else if (shape === "lshape") {
+      const L1 = areaGetVal("aF_L1"), W1 = areaGetVal("aF_W1");
+      const L2 = areaGetVal("aF_L2"), W2 = areaGetVal("aF_W2");
+      if (!L1 || !W1 || !L2 || !W2) throw new Error("Dono rectangles ki dimensions bharein.");
+      areaM2 = L1*W1 + L2*W2; dims = {L1,W1,L2,W2};
+    }
+  } catch(e) {
+    errEl.textContent = e.message; errEl.style.display = "block";
+    areaShowEmpty(); areaDrawDiagram(shape, {});
+    return;
+  }
+
+  if (!areaM2 || areaM2 <= 0) { areaShowEmpty(); areaDrawDiagram(shape, {}); return; }
+
+  const aFt2 = areaM2 / 0.092903;
+  const aGaj = areaM2 / 0.836127;
+  const aCm2 = areaM2 * 10000;
+  const aIn2 = areaM2 / 0.00064516;
+
+  document.getElementById("areaMainResult").textContent = areaFmtNum(aM2ToDisplay(areaM2)) + " " + aCurrentUnit();
+  document.getElementById("areaM2").textContent = areaFmtNum(areaM2) + " m²";
+  document.getElementById("areaFt2").textContent = areaFmtNum(aFt2) + " ft²";
+  document.getElementById("areaGaj").textContent = areaFmtNum(aGaj) + " gaj";
+
+  document.getElementById("areaConvTable").innerHTML = [
+    ["Square Meter (m²)",   areaFmtNum(areaM2)  + " m²"],
+    ["Square Feet (ft²)",   areaFmtNum(aFt2)    + " ft²"],
+    ["Gaj / Sq.Yard (gaj)", areaFmtNum(aGaj)    + " gaj"],
+    ["Square Centimeter",   areaFmtNum(aCm2)    + " cm²"],
+    ["Square Inch",         areaFmtNum(aIn2)    + " in²"],
+  ].map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+
+  areaDrawDiagram(shape, dims);
+}
+
+function aM2ToDisplay(m2) {
+  const u = document.getElementById("areaUnit").value;
+  return m2 / (areaFactors[u] * areaFactors[u]);
+}
+function aCurrentUnit() {
+  const u = document.getElementById("areaUnit").value;
+  return u + "²";
+}
+
+function areaShowEmpty() {
+  document.getElementById("areaMainResult").textContent = "—";
+  document.getElementById("areaM2").textContent = "—";
+  document.getElementById("areaFt2").textContent = "—";
+  document.getElementById("areaGaj").textContent = "—";
+  document.getElementById("areaConvTable").innerHTML =
+    '<tr><td colspan="2" style="text-align:center;color:#8a9fb0;padding:16px">Naap bharne par yahan data aayega…</td></tr>';
+}
+
+// ── Area Diagram Drawing ──
+function areaDrawDiagram(shape, dims) {
+  const canvas = document.getElementById("areaCanvas");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const hasDims = Object.keys(dims).length > 0;
+  if (!hasDims) {
+    ctx.fillStyle = "#8a9fb0"; ctx.font = "13px system-ui";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("Naap bharein — diagram yahaan dikhega", W/2, H/2);
+    return;
+  }
+
+  const PAD = 38;
+  ctx.strokeStyle = "#123149"; ctx.lineWidth = 2.5;
+  ctx.fillStyle = "#e8f3fb";
+
+  function drawDimLabel(x, y, txt, col) {
+    col = col || "#2a6592";
+    ctx.save();
+    ctx.font = "bold 11px system-ui"; ctx.fillStyle = col;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    const tw = ctx.measureText(txt).width;
+    ctx.fillRect(x - tw/2 - 4, y - 9, tw + 8, 18);
+    ctx.fillStyle = col;
+    ctx.fillText(txt, x, y);
+    ctx.restore();
+  }
+
+  const u = document.getElementById("areaUnit").value;
+
+  if (shape === "rect" || shape === "square") {
+    const { L, W: dW, S } = dims;
+    const L2 = L || S, W2 = dW || S;
+    const aspect = L2 / W2;
+    let rw = W - PAD*2, rh = H - PAD*2;
+    if (rw/rh > aspect) rw = rh * aspect; else rh = rw / aspect;
+    rw = Math.min(rw, W - PAD*2); rh = Math.min(rh, H - PAD*2);
+    const x = (W - rw)/2, y = (H - rh)/2;
+    ctx.beginPath(); ctx.rect(x,y,rw,rh); ctx.fill(); ctx.stroke();
+    const dv = v => areaFmtNum(v / areaFactors[u]) + u;
+    drawDimLabel(x + rw/2, y - 14, dv(L2), "#2a6592");
+    drawDimLabel(x + rw + 16, y + rh/2, dv(W2), "#1a6b45");
+
+  } else if (shape === "circle") {
+    const r = (Math.min(W, H)/2) - PAD;
+    ctx.beginPath(); ctx.arc(W/2, H/2, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle="#e05"; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(W/2,H/2); ctx.lineTo(W/2+r,H/2); ctx.stroke();
+    ctx.setLineDash([]);
+    const dv = v => areaFmtNum(v / areaFactors[u]) + u;
+    drawDimLabel(W/2 + r/2, H/2 - 14, "r=" + dv(dims.D/2), "#c03060");
+
+  } else if (shape === "triangle") {
+    const { B, H: dH } = dims;
+    const bw = W - PAD*2, bh = H - PAD*2;
+    const scale = Math.min(bw/B, bh/dH);
+    const sw = B * scale, sh = dH * scale;
+    const ox = (W - sw)/2, oy = (H - sh)/2;
+    ctx.beginPath(); ctx.moveTo(ox, oy+sh); ctx.lineTo(ox+sw, oy+sh); ctx.lineTo(ox+sw/2, oy); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle="#8a9fb0"; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(ox+sw/2,oy); ctx.lineTo(ox+sw/2,oy+sh); ctx.stroke();
+    ctx.setLineDash([]);
+    const dv = v => areaFmtNum(v / areaFactors[u]) + u;
+    drawDimLabel(ox + sw/2, oy+sh+16, dv(B), "#2a6592");
+    drawDimLabel(ox + sw/2 + 22, oy + sh/2, dv(dH), "#1a6b45");
+
+  } else if (shape === "trapezium") {
+    const { a, b, h } = dims;
+    const maxW = W - PAD*2, maxH = H - PAD*2;
+    const scale = Math.min(maxW/Math.max(a,b), maxH/h);
+    const sa = a*scale, sb = b*scale, sh = h*scale;
+    const ox = (W - Math.max(sa,sb))/2, oy = (H - sh)/2;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy+sh);
+    ctx.lineTo(ox+sa, oy+sh);
+    ctx.lineTo(ox+(sa-sb)/2+sb, oy);
+    ctx.lineTo(ox+(sa-sb)/2, oy);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    const dv = v => areaFmtNum(v / areaFactors[u]) + u;
+    drawDimLabel(ox+sa/2, oy+sh+16, dv(a), "#2a6592");
+    drawDimLabel(ox+(sa-sb)/2+sb/2, oy-14, dv(b), "#2a6592");
+    drawDimLabel(ox+sa+20, oy+sh/2, dv(h), "#1a6b45");
+
+  } else if (shape === "lshape") {
+    const { L1, W1, L2, W2 } = dims;
+    const scale = Math.min((W-PAD*2)/L1, (H-PAD*2)/W1) * 0.9;
+    const ox = (W - L1*scale)/2, oy = (H - W1*scale)/2;
+    const sl1=L1*scale, sw1=W1*scale, sl2=L2*scale, sw2=W2*scale;
+    ctx.beginPath();
+    ctx.moveTo(ox,oy); ctx.lineTo(ox+sl1,oy); ctx.lineTo(ox+sl1,oy+sw2);
+    ctx.lineTo(ox+sl2,oy+sw2); ctx.lineTo(ox+sl2,oy+sw1);
+    ctx.lineTo(ox,oy+sw1); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    const dv = v => areaFmtNum(v / areaFactors[u]) + u;
+    drawDimLabel(ox+sl1/2, oy-14, dv(L1), "#2a6592");
+    drawDimLabel(ox+sl1+18, oy+sw1/2, dv(W1), "#1a6b45");
+    drawDimLabel(ox+sl2/2, oy+sw2+14, dv(L2), "#9932cc");
+    drawDimLabel(ox+sl2+14, oy+sw2/2, dv(W2), "#9932cc");
+  }
+}
+
+// Init — home screen dikhao
+showHome();
+
+</script>
+</body>
+</html>
