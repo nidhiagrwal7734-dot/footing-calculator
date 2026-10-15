@@ -1,0 +1,16 @@
+{
+  "name": "Footing Calculator",
+  "short_name": "Footing Calc",
+  "description": "Construction footing volume calculator",
+  "start_url": "/footing-calculator/",
+  "display": "standalone",
+  "background_color": "#eef3f8",
+  "theme_color": "#123149",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
